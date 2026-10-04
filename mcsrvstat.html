@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>追乡者联合体服务器官网 • 状态查询</title>
+    <style>
+        /* ================= 全局样式 ================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #0f0e17;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 100px; /* 给固定导航栏让位 */
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        /* ================= 导航栏（保留原风格） ================= */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: rgba(20, 20, 35, 0.85);
+            backdrop-filter: blur(16px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00FFFA;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(0, 255, 250, 0.3);
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        .nav-menu li a {
+            text-decoration: none;
+            color: #a7a9be;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 8px 0;
+            border-bottom: 2px solid transparent;
+            transition: 0.3s ease;
+        }
+
+        .nav-menu li a:hover,
+        .nav-menu li a.active {
+            color: #00FFFA;
+            border-bottom-color: #00FFFA;
+            text-shadow: 0 0 15px rgba(0, 255, 250, 0.3);
+        }
+
+        /* ================= 页面主体 ================= */
+        h1 {
+            font-size: 36px;
+            color: #fffffe;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* 搜索框区域 */
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 560px;
+            padding: 0 20px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 60px;
+            border: 1px solid #2a2a4a;
+            background: #1a1a2e;
+            color: #fffffe;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: #00FFFA;
+            box-shadow: 0 0 20px rgba(0, 255, 250, 0.15);
+        }
+
+        .search-box input.error {
+            border-color: #ff4444;
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.2);
+        }
+
+        .search-box button {
+            padding: 14px 32px;
+            border-radius: 60px;
+            border: none;
+            background: #00FFFA;
+            color: #0f0e17;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .search-box button:hover {
+            background: #00d4d0;
+            box-shadow: 0 0 30px rgba(0, 255, 250, 0.3);
+        }
+
+        .search-box button:active {
+            transform: scale(0.96);
+        }
+
+        .search-box button:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* ================= 结果展示卡片 ================= */
+        #result {
+            width: 100%;
+            max-width: 560px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 30px 34px;
+            line-height: 1.8;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            margin: 0 20px;
+        }
+
+        /* 状态徽章 */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 60px;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .status-online {
+            background: rgba(0, 255, 100, 0.15);
+            color: #00ff64;
+            border: 1px solid rgba(0, 255, 100, 0.3);
+        }
+
+        .status-offline {
+            background: rgba(255, 68, 68, 0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 68, 68, 0.3);
+        }
+
+        /* 信息行 */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #a7a9be;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #fffffe;
+            font-weight: 500;
+            font-size: 15px;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-all;
+        }
+
+        /* MOTD 特殊处理 */
+        .motd-box {
+            background: rgba(0, 0, 0, 0.25);
+            border-left: 3px solid #00FFFA;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 8px 0 16px 0;
+            color: #d0d0e0;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        /* 加载/错误提示 */
+        .loading-text, .error-text {
+            text-align: center;
+            padding: 20px 0;
+            color: #a7a9be;
+            letter-spacing: 2px;
+        }
+
+        .error-text {
+            color: #ff6b6b;
+        }
+
+        /* ================= 移动端适配 ================= */
+        @media (max-width: 768px) {
+            .navbar { padding: 0 20px; height: 60px; }
+            .logo { font-size: 20px; }
+            .nav-menu { gap: 15px; }
+            .nav-menu li a { font-size: 14px; }
+
+            body { padding-top: 90px; }
+
+            h1 { font-size: 26px; }
+
+            .search-box {
+                flex-direction: column;
+                padding: 0 16px;
+            }
+
+            .search-box button {
+                width: 100%;
+            }
+
+            #result {
+                padding: 24px 20px;
+                margin: 0 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= 导航栏 ================= -->
+    <nav class="navbar">
+        <div class="logo">追乡者联合体</div>
+        <ul class="nav-menu">
+            <li><a href="index.html">首页</a></li>
+            <li><a href="mcsrvstat.html">状态查询</a></li>
+        </ul>
+    </nav>
+
+    <!-- ================= 页面主体 ================= -->
+    <h1>⛏️ 服务器状态查询</h1>
+
+    <div class="search-box">
+        <input id="serverInput" type="text" value="mc.homecc.zh.kg" placeholder="输入服务器地址 (如 play.hypixel.net)">
+        <button id="queryBtn">查询</button>
+    </div>
+
+    <div id="result">
+        <div class="loading-text">输入服务器地址，点击查询</div>
+    </div>
+
+    <script>
+        // 1. 获取页面元素
+        const input = document.getElementById('serverInput');
+        const btn = document.getElementById('queryBtn');
+        const resultDiv = document.getElementById('result');
+
+        // 2. 核心查询函数
+        function queryServer() {
+            const address = input.value.trim();
+
+            // 输入验证
+            if (!address) {
+                input.classList.add('error');
+                resultDiv.innerHTML = '<div class="error-text">⚠️ 请输入服务器地址</div>';
+                setTimeout(() => input.classList.remove('error'), 1500);
+                return;
+            }
+            input.classList.remove('error');
+
+            // 显示加载状态，并禁用按钮
+            resultDiv.innerHTML = '<div class="loading-text">⏳ 正在查询服务器状态...</div>';
+            btn.disabled = true;
+            btn.textContent = '查询中...';
+
+            // 3. 拼接 API 地址
+            const apiUrl = `https://api.mcsrvstat.us/3/${encodeURIComponent(address)}`;
+
+            // 4. 发送请求
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络请求失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 5. 渲染结果
+                    if (data.online) {
+                        // -------- 在线状态 --------
+                        const motdLines = data.motd && data.motd.clean 
+                            ? data.motd.clean.join('\n') 
+                            : '暂无 MOTD';
+                        const players = data.players 
+                            ? `${data.players.online} / ${data.players.max}` 
+                            : '未知';
+                        const version = data.version || '未知';
+                        const ping = (data.debug && data.debug.ping) ? '✅ 正常响应' : '❌ 无响应';
+
+                        resultDiv.innerHTML = `
+                            <div class="status-badge status-online">🟢 服务器在线</div>
+                            <div class="info-row">
+                                <span class="info-label">服务器地址</span>
+                                <span class="info-value">${address}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">MOTD</span>
+                            </div>
+                            <div class="motd-box">${motdLines}</div>
+                            <div class="info-row">
+                                <span class="info-label">在线玩家</span>
+                                <span class="info-value">${players}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">游戏版本</span>
+                                <span class="info-value">${version}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">响应状态</span>
+                                <span class="info-value">${ping}</span>
+                            </div>
+                        `;
+                    } else {
+                        // -------- 离线状态 --------
+                        resultDiv.innerHTML = `
+                            <div class="status-badge status-offline">🔴 服务器离线</div>
+                            <div class="info-row">
+                                <span class="info-label">服务器地址</span>
+                                <span class="info-value">${address}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">状态</span>
+                                <span class="info-value">无法连接或已关闭</span>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    // -------- 网络错误 --------
+                    resultDiv.innerHTML = `<div class="error-text">❌ 查询出错：${error.message}</div>`;
+                    console.error(error);
+                })
+                .finally(() => {
+                    // 恢复按钮状态
+                    btn.disabled = false;
+                    btn.textContent = '查询';
+                });
+        }
+
+        // 3. 绑定点击事件
+        btn.addEventListener('click', queryServer);
+
+        // 4. 绑定回车键事件（在输入框中按回车也能查询）
+        input.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                queryServer();
+            }
+        });
+    </script>
+
+</body>
+</html>
